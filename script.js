@@ -111,6 +111,7 @@ function loadTasks() {
         }
     }
     renderTasks();
+    renderTasks();
     updateCounter();
 }
 
