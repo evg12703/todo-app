@@ -7,6 +7,7 @@ const form = document.querySelector('form');// Добавьте форму
 
 let taskCount = 0; // Счётчик задач
 let tasks = []; // Массив для хранения задач
+let currentFilter = 'all'; // Текущий фильтр
 
 // Функция для добавления задачи
 function addTask(event) {
@@ -25,31 +26,14 @@ function addTask(event) {
 
     // Добавляем задачу в массив
     tasks.push(task);
-
-    // Создаём новый элемент списка
-    const li = document.createElement('li');
-
-    // Добавляем текст задачи и кнопку удаления (с data-id)
-    li.innerHTML = `
-        <span class="task-text" data-id="${task.id}">${taskText}</span>
-        <button class="delete-button" data-id="${task.id}">Удалить</button>
-    `;
-
-    // Добавляем элемент в список
-    todoList.appendChild(li);
+    saveTasks();
+    renderTasks();
 
     // Очищаем поле ввода
     input.value = '';
 
     // Обновляем счётчик
     updateCounter();
-
-    // Добавляем обработчик для кнопки удаления
-    const deleteButton = li.querySelector('.delete-button');
-    deleteButton.addEventListener('click', deleteTask);
-
-    // Сохраняем в localStorage
-    saveTasks();
 }
 // Функция для удаления задачи
 function deleteTask(event) {
@@ -61,7 +45,7 @@ function deleteTask(event) {
     saveTasks();
 
     // Удаляем элемент из списка
-    li.remove();
+    renderTasks();
 
     // Обновляем счётчик
     updateCounter();
@@ -74,15 +58,44 @@ function updateCounter() {
 function toggleTaskCompletion(event) {
     const taskText = event.target;
     const taskId = Number(taskText.dataset.id); // Получаем ID задачи
-    taskText.classList.toggle('task-completed');
 
     // Обновляем статус задачи и сохраняем в localStorage
     const task = tasks.find(task => task.id === taskId);
-    task.isComplete = taskText.classList.contains('task-completed');
+    if (!task) return;
+    task.isComplete = !task.isComplete;
     saveTasks();
+    renderTasks();
+    updateCounter();
 }
 
 // Функция для сохранения задач в localStorage
+function renderTasks() {
+    // Очищаем список
+    todoList.innerHTML = '';
+
+    // Фильтруем задачи
+    const filteredTasks = tasks.filter(task => {
+        if (currentFilter === 'all') return true;
+        if (currentFilter === 'active') return !task.isComplete;
+        if (currentFilter === 'completed') return task.isComplete;
+    });
+
+    // Отрисовываем задачи
+    filteredTasks.forEach(task => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span class="task-text" data-id="${task.id}">${task.text}</span>
+            <button class="delete-button" data-id="${task.id}">Удалить</button>
+        `;
+        if (task.isComplete) {
+            li.querySelector('.task-text').classList.add('task-completed');
+        }
+        todoList.appendChild(li);
+        const deleteButton = li.querySelector('.delete-button');
+        deleteButton.addEventListener('click', deleteTask);
+    });
+}
+
 function saveTasks() {
     localStorage.setItem('tasks', JSON.stringify(tasks));
 }
@@ -91,27 +104,43 @@ function saveTasks() {
 function loadTasks() {
     const savedTasks = localStorage.getItem('tasks');
     if (savedTasks) {
-        tasks = JSON.parse(savedTasks);
-        tasks.forEach(task => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <span class="task-text" data-id="${task.id}">${task.text}</span>
-                <button class="delete-button" data-id="${task.id}">Удалить</button>
-            `;
-            if (task.isComplete) {
-                li.querySelector('.task-text').classList.add('task-completed');
-            }
-            todoList.appendChild(li);
-            const deleteButton = li.querySelector('.delete-button');
-            deleteButton.addEventListener('click', deleteTask);
-        });
-        taskCount = tasks.length;
-        updateCounter();
+        try {
+            tasks = JSON.parse(savedTasks);
+        } catch(e) {
+            tasks = [];
+        }
     }
+    renderTasks();
+    updateCounter();
 }
 
 // Загрузка задач при загрузке страницы
+function updateFilterButtons() {
+    document.querySelectorAll('.filter-btn').forEach(button => {
+        button.classList.toggle('active', button.dataset.filter === currentFilter);
+    });
+}
+
 loadTasks();
+
+// Загрузка текущего фильтра из localStorage
+const savedFilter = localStorage.getItem('filter');
+if (savedFilter) {
+    currentFilter = savedFilter;
+}
+
+// Обновление активной кнопки фильтра
+updateFilterButtons();
+
+// Установка обработчиков клика на кнопки фильтрации
+document.querySelectorAll('.filter-btn').forEach(button => {
+    button.addEventListener('click', (event) => {
+        currentFilter = event.target.dataset.filter;
+        updateFilterButtons();
+        renderTasks();
+        localStorage.setItem('filter', currentFilter);
+    });
+});
 
 // Обработчики событий
 form.addEventListener('submit', addTask); // Добавляем задачу при отправке формы
