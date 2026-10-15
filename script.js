@@ -2,7 +2,7 @@
 const input = document.querySelector('input');
 const addButton = document.querySelector('button[type="submit"]');
 const todoList = document.getElementById('todo-list');
-const counter = document.querySelector('p');
+const counter = document.getElementById('counter');
 const form = document.querySelector('form');// Добавьте форму
 
 let taskCount = 0; // Счётчик задач
@@ -52,7 +52,12 @@ function deleteTask(event) {
 }
 // Функция для обновления счётчика
 function updateCounter() {
-    counter.textContent = `Всего: ${tasks.length}`;
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.isComplete).length;
+    const active = total - completed;
+    counter.textContent = `Активных: ${active} | Выполнено: ${completed} из ${total}`;
+    const clearBtn = document.getElementById('clear-completed');
+    if (clearBtn) clearBtn.disabled = completed === 0;
 }
 // Функция для переключения состояния задачи
 function toggleTaskCompletion(event) {
@@ -110,8 +115,7 @@ function loadTasks() {
             tasks = [];
         }
     }
-    renderTasks();
-    renderTasks();
+        renderTasks();
     updateCounter();
 }
 
@@ -144,6 +148,12 @@ document.querySelectorAll('.filter-btn').forEach(button => {
 });
 
 // Обработчики событий
+document.getElementById('clear-completed').addEventListener('click', () => {
+    tasks = tasks.filter(t => !t.isComplete);
+    saveTasks();
+    renderTasks();
+    updateCounter();
+});
 form.addEventListener('submit', addTask); // Добавляем задачу при отправке формы
 
 // Делегирование события клика на задачи

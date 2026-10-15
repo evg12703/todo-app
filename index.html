@@ -118,9 +118,19 @@
     background-color: #8b5cf6;
     color: white;
 }
+#clear-completed {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+#clear-completed:hover:not(:disabled) { background-color: #444; }
+#clear-completed:disabled { opacity: 0.4; cursor: not-allowed; }
 </style>
-</head>
-<body>
+</head><body>
     <!-- Заголовок -->
     <h1>Мои задачи</h1>
 
@@ -142,7 +152,8 @@
     </ul>
 
     <!-- Счётчик задач -->
-    <p>Всего: 0</p>
+   <p id="counter">Активных: 0 | Выполнено: 0 из 0</p>
+<button id="clear-completed" disabled>Очистить выполненные</button>
 
     <!-- Подключение скрипта -->
     <script src="script.js"></script>
